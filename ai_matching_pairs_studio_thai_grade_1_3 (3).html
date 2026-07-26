@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎓 AI Matching Pairs Studio (Thai Grade 1-3)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind Config & Custom CSS -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        pastel: {
+                            pink: '#FFD1DC',
+                            blue: '#AEC6CF',
+                            green: '#77DD77',
+                            yellow: '#FDFD96',
+                            purple: '#C3B1E1',
+                            orange: '#FFB347'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-sm': 'bounce-sm 0.5s ease infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 15px rgba(119, 221, 119, 0.5)' },
+                            '50%': { opacity: .7, boxShadow: '0 0 25px rgba(119, 221, 119, 0.8)' },
+                        },
+                        'bounce-sm': {
+                            '0%': { transform: 'translateY(0)' },
+                            '100%': { transform: 'translateY(-5px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
+            color: #f0f0f0;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        
+        .dark-mode .glass {
+            background: rgba(30, 30, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .game-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+        }
+        .game-card:hover:not(.matched) {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .game-card.selected {
+            border-color: #AEC6CF;
+            box-shadow: 0 0 15px rgba(174, 198, 207, 0.8);
+            transform: scale(1.05);
+        }
+        .game-card.matched {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            pointer-events: none;
+        }
+        .game-card.wrong {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #FF6961 !important;
+            background-color: #ffe5e5 !important;
+        }
+        .dark-mode .game-card.wrong { background-color: #5c2b2b !important; }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        #connection-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .dark-mode ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+        @media print {
+            body * { visibility: hidden; }
+            #view-report, #view-report * { visibility: visible; }
+            #view-report { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+
+        .hidden-view { display: none !important; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- Confetti Layer -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <nav class="glass sticky top-0 z-40 w-full px-4 py-3 flex justify-between items-center no-print">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="app.navigate('main')">
+            <span class="text-3xl animate-bounce-sm">🎓</span>
+            <div>
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500">คลังคำศัพท์ ป.1-3</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Teacher Mode</p>
+            </div>
+        </div>
+        <div class="flex gap-2 sm:gap-4 items-center">
+            <button onclick="app.toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Toggle Theme">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block text-yellow-300"></i>
+            </button>
+            <button onclick="app.navigate('main')" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Home">
+                <i class="fas fa-home"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main id="app-container" class="flex-grow container mx-auto px-4 py-6 flex flex-col items-center justify-center relative">
+        
+        <!-- ================= VIEW: MAIN MENU ================= -->
+        <div id="view-main" class="w-full max-w-4xl flex flex-col items-center space-y-8 animate-[float_4s_ease-in-out_infinite]">
+            <div class="text-center space-y-2">
+                <h2 class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-white drop-shadow-md">
+                    พร้อมเรียนรู้หรือยัง?
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-300">"ฝึกทักษะภาษาไทย ผ่านเกมแสนสนุก"</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-8">
+                <div onclick="app.navigate('play-setup')" class="glass rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 group shadow-lg border-b-4 border-blue-400">
+                    <div class="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4 group-hover:animate-bounce">
+                        <i class="fas fa-play text-4xl text-blue-500 dark:text-blue-300 ml-2"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">เริ่มเกม</h3>
+                </div>
+
+                <div onclick="app.navigate('teacher')" class="glass rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 group shadow-lg border-b-4 border-pink-400">
+                    <div class="w-24 h-24 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center mb-4 group-hover:rotate-12 transition-transform">
+                        <i class="fas fa-chalkboard-teacher text-4xl text-pink-500 dark:text-pink-300"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">คลังคำศัพท์</h3>
+                </div>
+
+                <div onclick="app.navigate('report')" class="glass rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 group shadow-lg border-b-4 border-green-400">
+                    <div class="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4 group-hover:animate-pulse">
+                        <i class="fas fa-chart-pie text-3xl text-green-500 dark:text-green-300"></i>
+                    </div>
+                    <h3 class="text-xl font-bold">รายงานผล</h3>
+                </div>
+
+                <div onclick="app.navigate('settings')" class="glass rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 group shadow-lg border-b-4 border-purple-400">
+                    <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mb-4 group-hover:rotate-90 transition-transform duration-500">
+                        <i class="fas fa-cog text-3xl text-purple-500 dark:text-purple-300"></i>
+                    </div>
+                    <h3 class="text-xl font-bold">การตั้งค่า</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: PLAY SETUP ================= -->
+        <div id="view-play-setup" class="hidden-view w-full max-w-2xl glass rounded-3xl p-6 sm:p-10 shadow-2xl">
+            <h2 class="text-3xl font-bold mb-6 text-center border-b pb-4 border-gray-200 dark:border-gray-700"><i class="fas fa-gamepad mr-2 text-blue-500"></i> ตั้งค่าเกม</h2>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold mb-3">1. โหมดการเล่น</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="mode-selector">
+                        <button class="mode-btn active bg-blue-500 text-white p-3 rounded-xl shadow-md border-2 border-transparent transition" data-mode="pic-word">🖼️ รูปภาพ → คำศัพท์</button>
+                        <button class="mode-btn bg-gray-100 dark:bg-gray-700 p-3 rounded-xl shadow-sm border-2 border-transparent hover:border-blue-300 transition" data-mode="listen-pic">🔊 ฟัง → รูปภาพ</button>
+                        <button class="mode-btn bg-gray-100 dark:bg-gray-700 p-3 rounded-xl shadow-sm border-2 border-transparent hover:border-blue-300 transition" data-mode="word-mean">📝 คำศัพท์ → ความหมาย</button>
+                        <button class="mode-btn bg-gray-100 dark:bg-gray-700 p-3 rounded-xl shadow-sm border-2 border-transparent hover:border-blue-300 transition" data-mode="mixed">🎲 ผสมคำถาม</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-3">2. ภาษาเป้าหมาย</label>
+                    <select id="setup-lang" class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500">
+                        <option value="thai">🇹🇭 ภาษาไทย</option>
+                        <option value="english">🇺🇸 English</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-3">3. ระดับความยาก (คู่)</label>
+                    <input type="range" id="setup-difficulty" min="4" max="16" step="2" value="6" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-2 font-bold">
+                        <span>ง่าย (4)</span>
+                        <span id="diff-display" class="text-blue-500 text-sm">6 คู่</span>
+                        <span>ยาก (16)</span>
+                    </div>
+                </div>
+
+                <button onclick="app.startGame()" class="w-full mt-6 bg-gradient-to-r from-green-400 to-blue-500 text-white text-xl font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                    เริ่มเกม <i class="fas fa-rocket ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: GAMEPLAY ================= -->
+        <div id="view-game" class="hidden-view w-full max-w-5xl flex-grow flex flex-col">
+            <div class="glass rounded-2xl p-4 mb-4 flex justify-between items-center shadow-md">
+                <div class="flex items-center gap-4">
+                    <button onclick="app.endGame(false)" class="text-gray-500 hover:text-red-500 transition"><i class="fas fa-times-circle text-2xl"></i></button>
+                    <div class="text-lg font-bold">คะแนน: <span id="game-score" class="text-blue-500 text-2xl">0</span></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm font-semibold bg-yellow-100 dark:bg-yellow-900 px-3 py-1 rounded-full text-yellow-700 dark:text-yellow-300">
+                        คอมโบ: x<span id="game-combo">1</span>
+                    </div>
+                    <div class="text-lg font-mono font-bold w-20 text-right"><i class="far fa-clock"></i> <span id="game-time">00:00</span></div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4 text-sm text-gray-500 font-medium no-print">
+                <i class="fas fa-info-circle"></i> จับคู่คำศัพท์ให้ถูกต้อง!
+            </div>
+
+            <div class="relative flex-grow flex gap-4 w-full h-full pb-10">
+                <canvas id="connection-canvas"></canvas>
+                <div id="board-left" class="flex-1 flex flex-col gap-3 justify-center z-20"></div>
+                <div id="board-right" class="flex-1 flex flex-col gap-3 justify-center z-20"></div>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: TEACHER MODE ================= -->
+        <div id="view-teacher" class="hidden-view w-full max-w-6xl glass rounded-3xl p-6 shadow-xl flex flex-col h-[85vh]">
+            <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+                <h2 class="text-3xl font-bold"><i class="fas fa-chalkboard-teacher text-pink-500 mr-2"></i> คลังคำศัพท์</h2>
+                <div class="flex gap-2">
+                    <button onclick="app.showImportModal()" class="bg-indigo-500 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-600 transition"><i class="fas fa-file-import"></i> นำเข้า</button>
+                    <button onclick="app.exportData()" class="bg-teal-500 text-white px-4 py-2 rounded-lg shadow hover:bg-teal-600 transition"><i class="fas fa-file-export"></i> ส่งออก</button>
+                    <button onclick="app.openVocabForm()" class="bg-pink-500 text-white px-4 py-2 rounded-lg shadow hover:bg-pink-600 transition"><i class="fas fa-plus"></i> เพิ่มคำ</button>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mb-4">
+                <div class="relative flex-grow">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="search-vocab" placeholder="ค้นหาคำศัพท์..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-pink-500" oninput="app.renderVocabList()">
+                </div>
+                <select id="filter-category" class="p-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" onchange="app.renderVocabList()">
+                    <option value="all">ทุกหมวดหมู่</option>
+                </select>
+            </div>
+
+            <div class="flex-grow overflow-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-inner">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-gray-100 dark:bg-gray-800 z-10 shadow-sm">
+                        <tr>
+                            <th class="p-3 border-b dark:border-gray-700">รูป</th>
+                            <th class="p-3 border-b dark:border-gray-700">ภาษาไทย</th>
+                            <th class="p-3 border-b dark:border-gray-700">English</th>
+                            <th class="p-3 border-b dark:border-gray-700">หมวดหมู่</th>
+                            <th class="p-3 border-b dark:border-gray-700 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vocab-list-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: LEARNING REPORT ================= -->
+        <div id="view-report" class="hidden-view w-full max-w-5xl glass rounded-3xl p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold"><i class="fas fa-chart-pie text-green-500 mr-2"></i> รายงานผลการเรียนรู้</h2>
+                <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition no-print"><i class="fas fa-print"></i> พิมพ์ PDF</button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow border-l-4 border-blue-500 flex flex-col items-center justify-center">
+                    <div class="text-sm text-gray-500">จำนวนเกม</div>
+                    <div id="stat-total-games" class="text-3xl font-bold text-blue-600 dark:text-blue-400">0</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow border-l-4 border-green-500 flex flex-col items-center justify-center">
+                    <div class="text-sm text-gray-500">คะแนนสูงสุด</div>
+                    <div id="stat-high-score" class="text-3xl font-bold text-green-600 dark:text-green-400">0</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow border-l-4 border-yellow-500 flex flex-col items-center justify-center">
+                    <div class="text-sm text-gray-500">ความแม่นยำ</div>
+                    <div id="stat-accuracy" class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">0%</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow border-l-4 border-purple-500 flex flex-col items-center justify-center">
+                    <div class="text-sm text-gray-500">คำที่จำได้</div>
+                    <div id="stat-mastered" class="text-3xl font-bold text-purple-600 dark:text-purple-400">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm mb-6 border border-red-100 dark:border-red-900">
+                <h3 class="text-xl font-bold mb-4 text-red-500"><i class="fas fa-robot mr-2"></i> วิเคราะห์ข้อผิดพลาด</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">คำศัพท์ที่ควรทบทวนเพิ่มเติม:</p>
+                <div id="report-weak-words" class="flex flex-wrap gap-2">
+                    <span class="text-gray-400 italic">เล่นเกมมากขึ้นเพื่อสร้างสถิติ...</span>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold mb-3">เกมล่าสุด</h3>
+            <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-inner max-h-60">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="sticky top-0 bg-gray-100 dark:bg-gray-800 z-10">
+                        <tr>
+                            <th class="p-2 border-b dark:border-gray-700">วันที่</th>
+                            <th class="p-2 border-b dark:border-gray-700">โหมด</th>
+                            <th class="p-2 border-b dark:border-gray-700">คะแนน</th>
+                            <th class="p-2 border-b dark:border-gray-700">แม่นยำ</th>
+                            <th class="p-2 border-b dark:border-gray-700">เวลา</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-list-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: SETTINGS ================= -->
+        <div id="view-settings" class="hidden-view w-full max-w-md glass rounded-3xl p-6 shadow-xl">
+            <h2 class="text-2xl font-bold mb-6 text-center"><i class="fas fa-cog text-purple-500 mr-2"></i> ตั้งค่า</h2>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                    <span><i class="fas fa-volume-up w-6 text-blue-500"></i> เสียงประกอบ</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="set-sfx" class="sr-only peer" checked onchange="app.saveSettings()">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                    <span><i class="fas fa-comment-dots w-6 text-green-500"></i> อ่านออกเสียง (TTS)</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="set-tts" class="sr-only peer" checked onchange="app.saveSettings()">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                    <label class="block text-sm mb-2"><i class="fas fa-tachometer-alt w-6 text-orange-500"></i> ความเร็วเสียง</label>
+                    <input type="range" id="set-voice-speed" min="0.5" max="1.5" step="0.1" value="1.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" onchange="app.saveSettings()">
+                </div>
+
+                <button onclick="app.resetData()" class="w-full mt-4 p-3 bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300 rounded-xl font-bold hover:bg-red-200 transition">
+                    <i class="fas fa-trash-alt mr-2"></i> ล้างข้อมูลทั้งหมด
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Vocab Form Modal -->
+    <div id="modal-vocab" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform" id="modal-vocab-content">
+            <h3 class="text-2xl font-bold mb-4" id="modal-vocab-title">เพิ่มคำศัพท์</h3>
+            <form id="vocab-form" onsubmit="app.saveVocab(event)" class="space-y-3">
+                <input type="hidden" id="form-id">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-500 uppercase">อีโมจิ</label>
+                        <input type="text" id="form-image" required class="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-pink-500 text-2xl text-center" placeholder="🍎">
+                    </div>
+                    <div class="flex-[2]">
+                        <label class="block text-xs font-bold text-gray-500 uppercase">หมวดหมู่</label>
+                        <input type="text" id="form-category" required class="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-pink-500" placeholder="ผลไม้">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">ภาษาไทย</label>
+                    <input type="text" id="form-thai" required class="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-pink-500" placeholder="แอปเปิล">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">English</label>
+                    <input type="text" id="form-english" required class="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-pink-500" placeholder="Apple">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">ความหมาย (คำอธิบาย)</label>
+                    <textarea id="form-meaning" rows="2" class="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-pink-500" placeholder="ผลไม้ชนิดหนึ่ง..."></textarea>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="app.closeModal('modal-vocab')" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 transition">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 shadow transition">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="modal-import" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6">
+            <h3 class="text-2xl font-bold mb-4">นำเข้าข้อมูล</h3>
+            <p class="text-sm text-gray-500 mb-4">รูปแบบ: <code>อีโมจิ,ไทย,English,หมวดหมู่</code></p>
+            <textarea id="import-text" rows="6" class="w-full p-3 rounded-lg border dark:bg-gray-700 dark:border-gray-600 font-mono text-sm mb-4" placeholder="🍎,แอปเปิล,Apple,ผลไม้&#10;🐘,ช้าง,Elephant,สัตว์"></textarea>
+            <div class="flex justify-end gap-2">
+                <button onclick="app.closeModal('modal-import')" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 transition">ยกเลิก</button>
+                <button onclick="app.processImport()" class="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 shadow transition">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal-game-over" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass rounded-3xl p-8 max-w-md w-full text-center transform scale-0 transition-transform duration-500" id="game-over-content">
+            <div class="text-6xl mb-4 animate-bounce">🏆</div>
+            <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-2">ยอดเยี่ยม!</h2>
+            
+            <div class="bg-white/50 dark:bg-black/30 rounded-2xl p-4 my-6 space-y-2">
+                <div class="flex justify-between font-bold text-lg"><span>คะแนน:</span> <span id="end-score" class="text-blue-600 dark:text-blue-400">0</span></div>
+                <div class="flex justify-between font-bold"><span>ความแม่นยำ:</span> <span id="end-accuracy" class="text-green-600 dark:text-green-400">0%</span></div>
+                <div class="flex justify-between font-bold"><span>เวลา:</span> <span id="end-time" class="text-purple-600 dark:text-purple-400">00:00</span></div>
+            </div>
+
+            <div class="flex gap-4 justify-center">
+                <button onclick="app.navigate('main')" class="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 font-bold transition">หน้าหลัก</button>
+                <button onclick="app.startGame()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold shadow-lg hover:shadow-xl transition transform hover:scale-105">เล่นอีกครั้ง</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 translate-y-10 z-50 pointer-events-none">
+        แจ้งเตือน
+    </div>
+
+    <script>
+        const DEFAULT_VOCAB = [
+            { id: 'v1', image: '🍎', thai: 'แอปเปิล', english: 'Apple', category: 'ผลไม้', meaning: 'ผลไม้รสหวาน' },
+            { id: 'v2', image: '🍌', thai: 'กล้วย', english: 'Banana', category: 'ผลไม้', meaning: 'ผลไม้ที่มีเปลือกสีเหลือง' },
+            { id: 'v3', image: '🐘', thai: 'ช้าง', english: 'Elephant', category: 'สัตว์', meaning: 'สัตว์เลี้ยงลูกด้วยนมตัวใหญ่' },
+            { id: 'v4', image: '🐯', thai: 'เสือ', english: 'Tiger', category: 'สัตว์', meaning: 'สัตว์ป่าดุร้าย' },
+            { id: 'v5', image: '✏️', thai: 'ดินสอ', english: 'Pencil', category: 'อุปกรณ์การเรียน', meaning: 'อุปกรณ์ใช้สำหรับเขียน' },
+            { id: 'v6', image: '📖', thai: 'หนังสือ', english: 'Book', category: 'อุปกรณ์การเรียน', meaning: 'สื่อสำหรับอ่าน' },
+            { id: 'v7', image: '⚽', thai: 'ฟุตบอล', english: 'Football', category: 'กีฬา', meaning: 'ลูกบอลสำหรับเตะ' },
+            { id: 'v8', image: '🏠', thai: 'บ้าน', english: 'House', category: 'สถานที่', meaning: 'ที่อยู่อาศัย' },
+            { id: 'v9', image: '🏫', thai: 'โรงเรียน', english: 'School', category: 'สถานที่', meaning: 'สถานที่สำหรับการเรียน' },
+            { id: 'v10', image: '🚗', thai: 'รถยนต์', english: 'Car', category: 'ยานพาหนะ', meaning: 'พาหนะบนถนน' },
+            { id: 'v11', image: '🐱', thai: 'แมว', english: 'Cat', category: 'สัตว์', meaning: 'สัตว์เลี้ยงน่ารัก' },
+            { id: 'v12', image: '🐕', thai: 'สุนัข', english: 'Dog', category: 'สัตว์', meaning: 'เพื่อนที่ดีที่สุดของมนุษย์' },
+            { id: 'v13', image: '☀️', thai: 'ดวงอาทิตย์', english: 'Sun', category: 'ธรรมชาติ', meaning: 'ดาวฤกษ์ให้แสงสว่าง' },
+            { id: 'v14', image: '🌙', thai: 'พระจันทร์', english: 'Moon', category: 'ธรรมชาติ', meaning: 'ดาวบริวารของโลก' },
+            { id: 'v15', image: '📱', thai: 'โทรศัพท์', english: 'Phone', category: 'เทคโนโลยี', meaning: 'อุปกรณ์สื่อสาร' },
+        ];
+
+        const app = {
+            state: {
+                vocab: [],
+                history: [],
+                settings: {
+                    sfx: true,
+                    tts: true,
+                    voiceSpeed: 1.0,
+                    darkMode: false
+                }
+            },
+            
+            game: {
+                active: false,
+                mode: 'pic-word',
+                lang: 'thai',
+                pairs: [],
+                leftItems: [],
+                rightItems: [],
+                selectedLeft: null,
+                selectedRight: null,
+                score: 0,
+                combo: 1,
+                matches: 0,
+                totalPairs: 0,
+                startTime: 0,
+                timerInterval: null,
+                wrongWords: [] 
+            },
+
+            audioCtx: null,
+
+            init() {
+                this.loadData();
+                this.applySettings();
+                this.setupEventListeners();
+                this.navigate('main');
+                this.initAudio();
+                
+                if (!window.crypto.randomUUID) {
+                    window.crypto.randomUUID = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
+                }
+            },
+
+            loadData() {
+                try {
+                    const savedVocab = localStorage.getItem('ai_pairs_vocab');
+                    this.state.vocab = savedVocab ? JSON.parse(savedVocab) : [...DEFAULT_VOCAB];
+                    
+                    const savedHistory = localStorage.getItem('ai_pairs_history');
+                    this.state.history = savedHistory ? JSON.parse(savedHistory) : [];
+                    
+                    const savedSettings = localStorage.getItem('ai_pairs_settings');
+                    if (savedSettings) {
+                        this.state.settings = { ...this.state.settings, ...JSON.parse(savedSettings) };
+                    }
+                } catch (e) {
+                    console.error("Storage error:", e);
+                    this.state.vocab = [...DEFAULT_VOCAB];
+                }
+            },
+
+            saveData() {
+                localStorage.setItem('ai_pairs_vocab', JSON.stringify(this.state.vocab));
+                localStorage.setItem('ai_pairs_history', JSON.stringify(this.state.history));
+                this.saveSettings();
+            },
+
+            saveSettings() {
+                this.state.settings.sfx = document.getElementById('set-sfx').checked;
+                this.state.settings.tts = document.getElementById('set-tts').checked;
+                this.state.settings.voiceSpeed = parseFloat(document.getElementById('set-voice-speed').value);
+                localStorage.setItem('ai_pairs_settings', JSON.stringify(this.state.settings));
+            },
+
+            applySettings() {
+                if (this.state.settings.darkMode) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+                document.getElementById('set-sfx').checked = this.state.settings.sfx;
+                document.getElementById('set-tts').checked = this.state.settings.tts;
+                document.getElementById('set-voice-speed').value = this.state.settings.voiceSpeed;
+            },
+
+            toggleDarkMode() {
+                this.state.settings.darkMode = !this.state.settings.darkMode;
+                this.applySettings();
+                this.saveSettings();
+            },
+
+            navigate(viewId) {
+                ['main', 'play-setup', 'game', 'teacher', 'report', 'settings'].forEach(id => {
+                    document.getElementById(`view-${id}`).classList.add('hidden-view');
+                });
+                document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
+                
+                if (viewId === 'teacher') this.renderVocabList();
+                if (viewId === 'report') this.renderReport();
+                if (viewId === 'main' && this.game.active) this.endGame(true);
+            },
+
+            showToast(message, duration = 3000) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.classList.remove('opacity-0', 'translate-y-10');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-10');
+                }, duration);
+            },
+
+            initAudio() {
+                const initCtx = () => {
+                    if (!this.audioCtx) {
+                        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    document.removeEventListener('click', initCtx);
+                };
+                document.addEventListener('click', initCtx);
+            },
+
+            playSound(type) {
+                if (!this.state.settings.sfx || !this.audioCtx) return;
+                
+                const ctx = this.audioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
+                
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                const now = ctx.currentTime;
+                
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.05);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.setValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(200, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    const melody = [400, 500, 600, 800];
+                    melody.forEach((freq, i) => {
+                        const t = now + (i * 0.15);
+                        osc.frequency.setValueAtTime(freq, t);
+                    });
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.8);
+                    osc.start(now);
+                    osc.stop(now + 0.8);
+                }
+            },
+
+            speak(text, langCode) {
+                if (!this.state.settings.tts || !('speechSynthesis' in window)) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = this.state.settings.voiceSpeed;
+                let lang = 'th-TH'; // Default to Thai
+                if (langCode === 'english') lang = 'en-US';
+                utterance.lang = lang;
+                window.speechSynthesis.speak(utterance);
+            },
+
+            setupEventListeners() {
+                const diffSlider = document.getElementById('setup-difficulty');
+                diffSlider.addEventListener('input', (e) => {
+                    document.getElementById('diff-display').textContent = `${e.target.value} คู่`;
+                });
+
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.mode-btn').forEach(b => {
+                            b.classList.remove('active', 'bg-blue-500', 'text-white');
+                            b.classList.add('bg-gray-100', 'dark:bg-gray-700');
+                        });
+                        e.currentTarget.classList.add('active', 'bg-blue-500', 'text-white');
+                        e.currentTarget.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+                        this.game.mode = e.currentTarget.dataset.mode;
+                    });
+                });
+            },
+
+            startGame() {
+                if (this.state.vocab.length < 4) {
+                    this.showToast("กรุณาเพิ่มคำศัพท์อย่างน้อย 4 คำก่อนเริ่มเกม");
+                    return;
+                }
+
+                this.playSound('click');
+                this.navigate('game');
+                
+                const activeModeBtn = document.querySelector('.mode-btn.active');
+                let mode = activeModeBtn ? activeModeBtn.dataset.mode : 'pic-word';
+                if (mode === 'mixed') {
+                    const modes = ['pic-word', 'listen-pic', 'word-mean'];
+                    mode = modes[Math.floor(Math.random() * modes.length)];
+                }
+                
+                this.game = {
+                    active: true,
+                    mode: mode,
+                    lang: document.getElementById('setup-lang').value,
+                    totalPairs: parseInt(document.getElementById('setup-difficulty').value),
+                    score: 0,
+                    combo: 1,
+                    matches: 0,
+                    startTime: Date.now(),
+                    selectedLeft: null,
+                    selectedRight: null,
+                    wrongWords: []
+                };
+
+                this.game.totalPairs = Math.min(this.game.totalPairs, this.state.vocab.length);
+                this.updateScoreUI();
+                this.startTimer();
+                this.generateBoard();
+                
+                document.getElementById('modal-game-over').classList.add('hidden');
+                document.getElementById('game-over-content').classList.remove('scale-100');
+                document.getElementById('game-over-content').classList.add('scale-0');
+            },
+
+            startTimer() {
+                clearInterval(this.game.timerInterval);
+                const timeEl = document.getElementById('game-time');
+                this.game.timerInterval = setInterval(() => {
+                    const seconds = Math.floor((Date.now() - this.game.startTime) / 1000);
+                    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+                    const s = String(seconds % 60).padStart(2, '0');
+                    timeEl.textContent = `${m}:${s}`;
+                }, 1000);
+            },
+
+            shuffle(array) {
+                let currentIndex = array.length, randomIndex;
+                while (currentIndex != 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+                }
+                return array;
+            },
+
+            generateBoard() {
+                const shuffledVocab = this.shuffle([...this.state.vocab]);
+                const selectedPairs = shuffledVocab.slice(0, this.game.totalPairs);
+                
+                let leftData = [];
+                let rightData = [];
+
+                selectedPairs.forEach(item => {
+                    let leftContent, rightContent, leftType, rightType;
+
+                    if (this.game.mode === 'pic-word') {
+                        leftContent = item.image; leftType = 'image';
+                        rightContent = item[this.game.lang]; rightType = 'text';
+                    } else if (this.game.mode === 'listen-pic') {
+                        leftContent = '<i class="fas fa-volume-up text-3xl"></i>'; leftType = 'audio';
+                        rightContent = item.image; rightType = 'image';
+                    } else if (this.game.mode === 'word-mean') {
+                        leftContent = item[this.game.lang]; leftType = 'text';
+                        rightContent = item.meaning || item.category; rightType = 'text';
+                    }
+
+                    leftData.push({ id: item.id, content: leftContent, type: leftType, raw: item });
+                    rightData.push({ id: item.id, content: rightContent, type: rightType, raw: item });
+                });
+
+                leftData = this.shuffle(leftData);
+                rightData = this.shuffle(rightData);
+
+                const leftCol = document.getElementById('board-left');
+                const rightCol = document.getElementById('board-right');
+                leftCol.innerHTML = ''; rightCol.innerHTML = '';
+
+                leftData.forEach((item, index) => {
+                    leftCol.appendChild(this.createCard(item, 'left', index));
+                });
+                rightData.forEach((item, index) => {
+                    rightCol.appendChild(this.createCard(item, 'right', index));
+                });
+            },
+
+            createCard(item, side, index) {
+                const div = document.createElement('div');
+                div.className = `game-card glass rounded-xl p-4 flex items-center justify-center min-h-[80px] shadow-sm relative overflow-hidden transform transition-all duration-300 animate-[bounce-sm_0.5s_ease-out_both]`;
+                div.style.animationDelay = `${index * 50}ms`;
+                div.dataset.id = item.id;
+                div.dataset.side = side;
+                div.dataset.type = item.type;
+                
+                if (item.type === 'audio') {
+                    div.dataset.text = item.raw[this.game.lang];
+                }
+
+                let contentClass = 'text-xl font-bold text-center';
+                if (item.type === 'image') contentClass = 'text-5xl drop-shadow-md';
+                if (item.type === 'audio') contentClass = 'text-blue-500 animate-pulse';
+
+                div.innerHTML = `<div class="${contentClass}">${item.content}</div>`;
+
+                div.addEventListener('click', () => this.handleCardSelect(div, side));
+
+                return div;
+            },
+
+            handleCardSelect(cardEl, side) {
+                if (cardEl.classList.contains('matched')) return;
+
+                this.playSound('click');
+
+                if (cardEl.dataset.type === 'audio' && side === 'left') {
+                    this.speak(cardEl.dataset.text, this.game.lang);
+                } else if (side === 'left' && this.state.settings.tts && this.game.mode !== 'listen-pic') {
+                     if(cardEl.dataset.type === 'text') {
+                        this.speak(cardEl.innerText, this.game.lang);
+                     } else if (cardEl.dataset.type === 'image') {
+                         const item = this.state.vocab.find(v => v.id == cardEl.dataset.id);
+                         if(item) this.speak(item[this.game.lang], this.game.lang);
+                     }
+                }
+
+                if (side === 'left') {
+                    if (this.game.selectedLeft) this.game.selectedLeft.classList.remove('selected');
+                    this.game.selectedLeft = cardEl;
+                } else {
+                    if (this.game.selectedRight) this.game.selectedRight.classList.remove('selected');
+                    this.game.selectedRight = cardEl;
+                }
+                
+                cardEl.classList.add('selected');
+
+                if (this.game.selectedLeft && this.game.selectedRight) {
+                    this.checkMatch();
+                }
+            },
+
+            checkMatch() {
+                const left = this.game.selectedLeft;
+                const right = this.game.selectedRight;
+                const isMatch = left.dataset.id === right.dataset.id;
+
+                if (isMatch) {
+                    this.playSound('correct');
+                    left.classList.remove('selected');
+                    right.classList.remove('selected');
+                    
+                    left.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-500', 'animate-pulse-glow');
+                    right.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-500', 'animate-pulse-glow');
+
+                    const basePoints = 10;
+                    this.game.score += (basePoints * this.game.combo);
+                    this.game.combo++;
+                    this.game.matches++;
+                    
+                    this.updateScoreUI();
+
+                    setTimeout(() => {
+                        left.classList.add('matched');
+                        right.classList.add('matched');
+                        this.game.selectedLeft = null;
+                        this.game.selectedRight = null;
+                        
+                        if (this.game.matches === this.game.totalPairs) {
+                            this.triggerWin();
+                        }
+                    }, 500);
+
+                } else {
+                    this.playSound('wrong');
+                    left.classList.add('wrong');
+                    right.classList.add('wrong');
+                    
+                    const item = this.state.vocab.find(v => v.id == left.dataset.id);
+                    if (item) this.game.wrongWords.push(item[this.game.lang]);
+
+                    this.game.score = Math.max(0, this.game.score - 2);
+                    this.game.combo = 1;
+                    this.updateScoreUI();
+
+                    setTimeout(() => {
+                        left.classList.remove('selected', 'wrong');
+                        right.classList.remove('selected', 'wrong');
+                        this.game.selectedLeft = null;
+                        this.game.selectedRight = null;
+                    }, 600);
+                }
+            },
+
+            updateScoreUI() {
+                document.getElementById('game-score').textContent = this.game.score;
+                const comboEl = document.getElementById('game-combo');
+                comboEl.textContent = this.game.combo;
+                if (this.game.combo > 1) {
+                    comboEl.parentElement.classList.remove('bg-yellow-100', 'text-yellow-700');
+                    comboEl.parentElement.classList.add('bg-orange-500', 'text-white', 'animate-bounce-sm');
+                } else {
+                    comboEl.parentElement.classList.add('bg-yellow-100', 'text-yellow-700');
+                    comboEl.parentElement.classList.remove('bg-orange-500', 'text-white', 'animate-bounce-sm');
+                }
+            },
+
+            triggerWin() {
+                this.playSound('win');
+                clearInterval(this.game.timerInterval);
+                this.fireConfetti();
+                
+                const timeTaken = Math.floor((Date.now() - this.game.startTime) / 1000);
+                const mistakes = this.game.wrongWords.length;
+                const accuracy = Math.round((this.game.totalPairs / (this.game.totalPairs + mistakes)) * 100);
+
+                const gameRecord = {
+                    date: new Date().toISOString(),
+                    mode: this.game.mode,
+                    score: this.game.score,
+                    accuracy: accuracy,
+                    time: timeTaken,
+                    wrongWords: [...this.game.wrongWords]
+                };
+                this.state.history.unshift(gameRecord);
+                if(this.state.history.length > 50) this.state.history.pop();
+                this.saveData();
+
+                setTimeout(() => {
+                    document.getElementById('end-score').textContent = this.game.score;
+                    document.getElementById('end-accuracy').textContent = accuracy + '%';
+                    
+                    const m = String(Math.floor(timeTaken / 60)).padStart(2, '0');
+                    const s = String(timeTaken % 60).padStart(2, '0');
+                    document.getElementById('end-time').textContent = `${m}:${s}`;
+
+                    const modal = document.getElementById('modal-game-over');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => document.getElementById('game-over-content').classList.remove('scale-0'), 50);
+                }, 1000);
+            },
+
+            endGame(silent = false) {
+                clearInterval(this.game.timerInterval);
+                this.game.active = false;
+                if (!silent) this.navigate('main');
+            },
+
+            renderVocabList() {
+                const search = document.getElementById('search-vocab').value.toLowerCase();
+                const tbody = document.getElementById('vocab-list-body');
+                tbody.innerHTML = '';
+
+                const categories = [...new Set(this.state.vocab.map(v => v.category))];
+                const filterSelect = document.getElementById('filter-category');
+                const currentFilter = filterSelect.value;
+                
+                filterSelect.innerHTML = '<option value="all">ทุกหมวดหมู่</option>';
+                categories.forEach(c => {
+                    filterSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                });
+                filterSelect.value = currentFilter;
+
+                const filtered = this.state.vocab.filter(v => {
+                    const matchSearch = v.english.toLowerCase().includes(search) || 
+                                        v.thai.includes(search);
+                    const matchCat = currentFilter === 'all' || v.category === currentFilter;
+                    return matchSearch && matchCat;
+                });
+
+                filtered.forEach(v => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-800 transition border-b dark:border-gray-700';
+                    tr.innerHTML = `
+                        <td class="p-3 text-3xl text-center">${v.image}</td>
+                        <td class="p-3 font-semibold">${v.thai}</td>
+                        <td class="p-3">${v.english}</td>
+                        <td class="p-3"><span class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs">${v.category}</span></td>
+                        <td class="p-3 text-center">
+                            <button onclick="app.editVocab('${v.id}')" class="text-blue-500 hover:text-blue-700 mr-2 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="app.deleteVocab('${v.id}')" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            },
+
+            openVocabForm() {
+                document.getElementById('vocab-form').reset();
+                document.getElementById('form-id').value = '';
+                document.getElementById('modal-vocab-title').textContent = 'เพิ่มคำศัพท์';
+                const modal = document.getElementById('modal-vocab');
+                modal.classList.remove('hidden');
+                setTimeout(() => document.getElementById('modal-vocab-content').classList.remove('scale-95'), 10);
+            },
+
+            closeModal(id) {
+                const modal = document.getElementById(id);
+                if (id === 'modal-vocab') {
+                    document.getElementById('modal-vocab-content').classList.add('scale-95');
+                }
+                setTimeout(() => modal.classList.add('hidden'), 150);
+            },
+
+            saveVocab(e) {
+                e.preventDefault();
+                const id = document.getElementById('form-id').value || crypto.randomUUID();
+                const word = {
+                    id: id,
+                    image: document.getElementById('form-image').value,
+                    category: document.getElementById('form-category').value,
+                    english: document.getElementById('form-english').value,
+                    thai: document.getElementById('form-thai').value,
+                    meaning: document.getElementById('form-meaning').value
+                };
+
+                const existingIndex = this.state.vocab.findIndex(v => v.id === id);
+                if (existingIndex > -1) {
+                    this.state.vocab[existingIndex] = word;
+                    this.showToast("อัปเดตคำศัพท์เรียบร้อย!");
+                } else {
+                    this.state.vocab.push(word);
+                    this.showToast("เพิ่มคำศัพท์เรียบร้อย!");
+                }
+                
+                this.saveData();
+                this.renderVocabList();
+                this.closeModal('modal-vocab');
+            },
+
+            editVocab(id) {
+                const word = this.state.vocab.find(v => v.id === id);
+                if (!word) return;
+                
+                document.getElementById('form-id').value = word.id;
+                document.getElementById('form-image').value = word.image || '';
+                document.getElementById('form-category').value = word.category || '';
+                document.getElementById('form-english').value = word.english || '';
+                document.getElementById('form-thai').value = word.thai || '';
+                document.getElementById('form-meaning').value = word.meaning || '';
+                
+                document.getElementById('modal-vocab-title').textContent = 'แก้ไขคำศัพท์';
+                
+                const modal = document.getElementById('modal-vocab');
+                modal.classList.remove('hidden');
+                setTimeout(() => document.getElementById('modal-vocab-content').classList.remove('scale-95'), 10);
+            },
+
+            deleteVocab(id) {
+                if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบคำศัพท์นี้?")) {
+                    this.state.vocab = this.state.vocab.filter(v => v.id !== id);
+                    this.saveData();
+                    this.renderVocabList();
+                    this.showToast("ลบคำศัพท์แล้ว.");
+                }
+            },
+
+            showImportModal() {
+                document.getElementById('import-text').value = '';
+                document.getElementById('modal-import').classList.remove('hidden');
+            },
+
+            processImport() {
+                const text = document.getElementById('import-text').value.trim();
+                if (!text) return;
+                const lines = text.split('\n');
+                let added = 0;
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if (parts.length >= 4) {
+                        this.state.vocab.push({
+                            id: crypto.randomUUID(),
+                            image: parts[0] ? parts[0].trim() : '❓',
+                            thai: parts[1] ? parts[1].trim() : '',
+                            english: parts[2] ? parts[2].trim() : '',
+                            category: parts[3] ? parts[3].trim() : 'ทั่วไป',
+                            meaning: ''
+                        });
+                        added++;
+                    }
+                });
+                if (added > 0) {
+                    this.saveData();
+                    this.renderVocabList();
+                    this.showToast(`นำเข้าสำเร็จ ${added} คำ!`);
+                } else {
+                    this.showToast("รูปแบบไม่ถูกต้อง กรุณาตรวจสอบ.");
+                }
+                this.closeModal('modal-import');
+            },
+
+            exportData() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state.vocab, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "vocab_data.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+                this.showToast("ส่งออกข้อมูลสำเร็จ!");
+            },
+
+            resetData() {
+                if (confirm("คำเตือน: ข้อมูลจะถูกรีเซ็ตเป็นค่าเริ่มต้นทั้งหมด คุณแน่ใจไหม?")) {
+                    localStorage.removeItem('ai_pairs_vocab');
+                    localStorage.removeItem('ai_pairs_history');
+                    this.state.vocab = [...DEFAULT_VOCAB];
+                    this.state.history = [];
+                    this.saveData();
+                    this.showToast("รีเซ็ตข้อมูลเป็นค่าเริ่มต้นแล้ว");
+                    this.navigate('main');
+                }
+            },
+
+            renderReport() {
+                const history = this.state.history;
+                document.getElementById('stat-total-games').textContent = history.length;
+                let highScore = 0;
+                let totalAcc = 0;
+                let wordErrors = {};
+                const tbody = document.getElementById('history-list-body');
+                tbody.innerHTML = '';
+                history.forEach((game, index) => {
+                    if (game.score > highScore) highScore = game.score;
+                    totalAcc += game.accuracy;
+                    game.wrongWords.forEach(w => {
+                        wordErrors[w] = (wordErrors[w] || 0) + 1;
+                    });
+                    const date = new Date(game.date).toLocaleDateString();
+                    const m = String(Math.floor(game.time / 60)).padStart(2, '0');
+                    const s = String(game.time % 60).padStart(2, '0');
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b dark:border-gray-700';
+                    tr.innerHTML = `
+                        <td class="p-2">${date}</td>
+                        <td class="p-2 capitalize">${game.mode.replace('-', ' ')}</td>
+                        <td class="p-2 font-bold text-blue-500">${game.score}</td>
+                        <td class="p-2">${game.accuracy}%</td>
+                        <td class="p-2">${m}:${s}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('stat-high-score').textContent = highScore;
+                document.getElementById('stat-accuracy').textContent = history.length ? Math.round(totalAcc / history.length) + '%' : '0%';
+                const sortedErrors = Object.entries(wordErrors).sort((a, b) => b[1] - a[1]);
+                const weakWordsContainer = document.getElementById('report-weak-words');
+                weakWordsContainer.innerHTML = '';
+                if (sortedErrors.length > 0) {
+                    sortedErrors.slice(0, 5).forEach(([word, count]) => {
+                        weakWordsContainer.innerHTML += `<span class="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">${word} (${count} ครั้ง)</span>`;
+                    });
+                } else {
+                    weakWordsContainer.innerHTML = '<span class="text-green-500 font-medium"><i class="fas fa-check-circle"></i> ไม่มีข้อผิดพลาดที่พบบ่อย!</span>';
+                }
+                const masteredCount = Math.max(0, this.state.vocab.length - Object.keys(wordErrors).length);
+                document.getElementById('stat-mastered').textContent = masteredCount;
+            },
+
+            fireConfetti() {
+                const canvas = document.getElementById('confetti-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                const particles = [];
+                const colors = ['#FFD1DC', '#AEC6CF', '#77DD77', '#FDFD96', '#C3B1E1', '#FFB347', '#ff6b6b', '#4ecdc4', '#ffe66d'];
+                for(let i=0; i<150; i++) {
+                    particles.push({
+                        x: canvas.width / 2,
+                        y: canvas.height / 2 + 100,
+                        r: Math.random() * 8 + 4,
+                        dx: Math.random() * 20 - 10,
+                        dy: Math.random() * -20 - 5,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        tilt: Math.floor(Math.random() * 10) - 10,
+                        tiltAngleIncrement: (Math.random() * 0.07) + 0.05,
+                        tiltAngle: 0
+                    });
+                }
+                let animationId;
+                const draw = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    let active = false;
+                    particles.forEach(p => {
+                        p.tiltAngle += p.tiltAngleIncrement;
+                        p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
+                        p.x += Math.sin(p.tiltAngle) * 2;
+                        p.dy += 0.2;
+                        p.y += p.dy;
+                        p.x += p.dx;
+                        if (p.y <= canvas.height) active = true;
+                        ctx.beginPath();
+                        ctx.lineWidth = p.r;
+                        ctx.strokeStyle = p.color;
+                        ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                        ctx.stroke();
+                    });
+                    if (active) {
+                        animationId = requestAnimationFrame(draw);
+                    } else {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                };
+                draw();
+                setTimeout(() => cancelAnimationFrame(animationId), 5000);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+        window.addEventListener('resize', () => {
+            const confCanvas = document.getElementById('confetti-canvas');
+            confCanvas.width = window.innerWidth;
+            confCanvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
